@@ -30,7 +30,7 @@ function do_audio_stuff() {
     curtime = 0;
 
     for (var i in notes) {
-        const note = 72 + notes[i];
+        const note = 84 + notes[i];
         const freq = frequencyFromNoteNumber(note);
         const duration = lengths[i] / 8;
         oscillator.frequency.setValueAtTime(freq, curtime);
@@ -110,24 +110,22 @@ function visualize() {
     console.log(bufferLengthAlt);
     var dataArrayAlt = new Uint8Array(bufferLengthAlt);
 
+    const minimum_played_note = 84;
+    const check_below_freq = frequencyFromNoteNumber(minimum_played_note - 1);
+    const check_below_idx = check_below_freq * bufferLengthAlt / audioCtx.sampleRate * 2;
+
     var drawAlt = function() {
         analyser.getByteFrequencyData(dataArrayAlt);
 
         var barHeight;
 
         var maxsofar = 0;
-        var maxIdx = -1;
+        var maxIdx = 1;
 
-        var correct_freq = oscillator.frequency.value;
-
-        var correct_start_idx = correct_freq * 0.95 * bufferLengthAlt / audioCtx.sampleRate * 2;
-        var correct_end_idx = correct_freq * 1.05 * bufferLengthAlt / audioCtx.sampleRate * 2;
-
-      for(var i = 0; i < bufferLengthAlt/8; i++) {
+      for(var i = 1; i < check_below_idx; i++) {
           barHeight = dataArrayAlt[i];
 
-          inside = correct_start_idx <= i && i <= correct_end_idx;
-          if (barHeight > maxsofar && !inside) {
+          if (barHeight > maxsofar) {
               maxsofar = barHeight;
               maxIdx = i;
           }
@@ -136,7 +134,7 @@ function visualize() {
         var freq = maxIdx / bufferLengthAlt * audioCtx.sampleRate / 2;
 
         // Unscramble image
-        var timeNow = Math.floor(audioCtx.currentTime * 8);
+        var timeNow = Math.floor((audioCtx.currentTime - latency) * 8);
         var total_song_length = sample_points[sample_points.length - 1];
 
         if (timeNow < total_song_length) {
